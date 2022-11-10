@@ -60,8 +60,6 @@ public class SQLSemanticProcessor {
 
     private static final Log log = Log.getLog(SQLSemanticProcessor.class);
 
-    private static final String NESTED_QUERY_AlIAS = "z_q";
-
     private static final boolean ALLOW_COMPLEX_PARSING = false;
 
     public static Statement parseQuery(@Nullable SQLDialect dialect, @NotNull String sql) throws DBCException {
@@ -160,20 +158,7 @@ public class SQLSemanticProcessor {
     }
 
     public static String wrapQuery(final DBPDataSource dataSource, String sqlQuery, final DBDDataFilter dataFilter) {
-        // Append filter conditions to query
-        StringBuilder modifiedQuery = new StringBuilder(sqlQuery.length() + 100);
-        modifiedQuery.append("SELECT * FROM (\n");
-        modifiedQuery.append(sqlQuery);
-        modifiedQuery.append("\n) ").append(NESTED_QUERY_AlIAS);
-        if (dataFilter.hasConditions()) {
-            modifiedQuery.append(" WHERE ");
-            SQLUtils.appendConditionString(dataFilter, dataSource, NESTED_QUERY_AlIAS, modifiedQuery, true, true);
-        }
-        if (dataFilter.hasOrdering()) {
-            modifiedQuery.append(" ORDER BY "); //$NON-NLS-1$
-            SQLUtils.appendOrderString(dataFilter, dataSource, NESTED_QUERY_AlIAS, true, modifiedQuery);
-        }
-        return modifiedQuery.toString();
+        return dataSource.getSQLDialect().getQueryGenerator().getWrappedFilterQuery(dataSource, sqlQuery, dataFilter);
     }
 
     private static boolean patchSelectQuery(DBRProgressMonitor monitor, DBPDataSource dataSource, PlainSelect select, DBDDataFilter filter) throws JSQLParserException, DBException {
